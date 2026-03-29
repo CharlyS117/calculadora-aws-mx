@@ -1,0 +1,31 @@
+name: Actualizar Precios AWS
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Se ejecuta cada lunes a medianoche
+  workflow_dispatch: # Permite ejecutarlo manualmente si quieres
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Instalar dependencias
+        run: pip install requests
+
+      - name: Ejecutar script de extracción
+        run: python update_prices.py
+
+      - name: Guardar cambios en el JSON
+        run: |
+          git config --global user.name 'PriceBot'
+          git config --global user.email 'bot@carlos.dev'
+          git add aws_prices.json
+          git commit -m "Auto-update: Precios de AWS actualizados" || exit 0
+          git push
