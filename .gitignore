@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Workspace / IDE
+.vscode/
+.idea/
+
+# Local data
+aws_prices.json
+!aws_prices.json # We WANT to include the first version, then let the bot update it.
+
+# Temp media
+*.png
+*.webp
+*.mp4
+/tmp/
+.gemini/

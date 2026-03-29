@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Mexico Multi-Service Calculator | Dev MX Tool</title>
+    <meta name="description" content="Calculadora de costos AWS multi-servicio (EC2, S3, Lambda, Transfer) para desarrolladores en México. Convierte USD a MXN con IVA automático.">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* Slate 950 */
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tab-active {
+            @apply border-blue-500 text-blue-400 bg-blue-500/10;
+        }
+        .section-hidden {
+            display: none !important;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <!-- Container -->
+    <div class="w-full max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700">
+        
+        <!-- Header -->
+        <header class="text-center space-y-2">
+            <div class="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full text-blue-400 text-sm font-medium mb-4">
+                <i data-lucide="cloud" class="w-4 h-4"></i>
+                <span>Calculadora Multi-Servicio AWS México</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">
+                Consola de <span class="text-gradient">Presupuestos AWS</span>
+            </h1>
+        </header>
+
+        <!-- Main Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4">
+            
+            <!-- Left: Configurations & Tabs -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Tab Navigation -->
+                <nav class="flex space-x-1 bg-slate-900 p-1 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto no-scrollbar">
+                    <button onclick="showSection('ec2')" id="tab-ec2" class="tab-btn flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800">
+                        <i data-lucide="server" class="w-4 h-4"></i>
+                        <span>EC2</span>
+                    </button>
+                    <button onclick="showSection('s3')" id="tab-s3" class="tab-btn flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800">
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                        <span>S3</span>
+                    </button>
+                    <button onclick="showSection('lambda')" id="tab-lambda" class="tab-btn flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        <span>Lambda</span>
+                    </button>
+                    <button onclick="showSection('transfer')" id="tab-transfer" class="tab-btn flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-slate-800">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                        <span>Transfer</span>
+                    </button>
+                </nav>
+
+                <!-- Configuration Cards (Sections) -->
+                <div class="glass-card rounded-3xl p-8 shadow-2xl min-h-[400px]">
+                    
+                    <!-- EC2 Section -->
+                    <div id="section-ec2" class="config-section space-y-6 animate-in slide-in-from-left duration-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold flex items-center gap-3">
+                                <i data-lucide="server" class="w-6 h-6 text-blue-500"></i>
+                                Instancias EC2
+                            </h2>
+                            <span id="cost-ec2" class="text-blue-400 font-bold">$0.00 USD</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label for="ec2-type" class="text-sm font-medium text-slate-400">Tipo de Instancia</label>
+                                <select id="ec2-type" onchange="calculate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                                    <optgroup label="T4g (Graviton)">
+                                        <option value="t4g.nano">t4g.nano ($0.0042 USD/h)</option>
+                                        <option value="t4g.micro">t4g.micro ($0.0084 USD/h)</option>
+                                        <option value="t4g.small" selected>t4g.small ($0.0168 USD/h)</option>
+                                        <option value="t4g.medium">t4g.medium ($0.0336 USD/h)</option>
+                                    </optgroup>
+                                    <optgroup label="T3 (Intel/AMD)">
+                                        <option value="t3.nano">t3.nano ($0.0052 USD/h)</option>
+                                        <option value="t3.micro">t3.micro ($0.0104 USD/h)</option>
+                                        <option value="t3.small">t3.small ($0.0208 USD/h)</option>
+                                        <option value="t3.medium">t3.medium ($0.0416 USD/h)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="ec2-hours" class="text-sm font-medium text-slate-400">Horas de Operación / Día</label>
+                                <div class="relative">
+                                    <input id="ec2-hours" type="number" min="0" max="24" value="24" oninput="calculate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all pr-12">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">h</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- S3 Section -->
+                    <div id="section-s3" class="config-section section-hidden space-y-6 animate-in slide-in-from-left duration-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold flex items-center gap-3">
+                                <i data-lucide="database" class="w-6 h-6 text-emerald-500"></i>
+                                Almacenamiento S3
+                            </h2>
+                            <span id="cost-s3" class="text-emerald-400 font-bold">$0.00 USD</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label for="s3-gb" class="text-sm font-medium text-slate-400">Datos Almacenados (Mes)</label>
+                                <div class="relative">
+                                    <input id="s3-gb" type="number" min="0" value="100" oninput="calculate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all pr-12">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">GB</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 italic">* Tarifa S3 Standard: $0.023 / GB</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lambda Section -->
+                    <div id="section-lambda" class="config-section section-hidden space-y-6 animate-in slide-in-from-left duration-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold flex items-center gap-3">
+                                <i data-lucide="zap" class="w-6 h-6 text-orange-500"></i>
+                                Funciones Lambda
+                            </h2>
+                            <span id="cost-lambda" class="text-orange-400 font-bold">$0.00 USD</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label for="lambda-req" class="text-sm font-medium text-slate-400">Peticiones (Millones)</label>
+                                <div class="relative">
+                                    <input id="lambda-req" type="number" min="0" value="1" oninput="calculate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all pr-12">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">M</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="lambda-dur" class="text-sm font-medium text-slate-400">Duración Promedio</label>
+                                <div class="relative">
+                                    <input id="lambda-dur" type="number" min="0" value="100" oninput="calculate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all pr-12">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">ms</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2 md:col-span-2">
+                                <label for="lambda-mem" class="text-sm font-medium text-slate-400">Memoria Asignada</label>
+                                <select id="lambda-mem" onchange="calculate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all cursor-pointer">
+                                    <option value="128">128 MB</option>
+                                    <option value="512" selected>512 MB</option>
+                                    <option value="1024">1024 MB (1GB)</option>
+                                    <option value="2048">2048 MB (2GB)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transfer Section -->
+                    <div id="section-transfer" class="config-section section-hidden space-y-6 animate-in slide-in-from-left duration-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold flex items-center gap-3">
+                                <i data-lucide="share-2" class="w-6 h-6 text-purple-500"></i>
+                                Transferencia de Datos
+                            </h2>
+                            <span id="cost-transfer" class="text-purple-400 font-bold">$0.00 USD</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label for="transfer-gb" class="text-sm font-medium text-slate-400">Datos hacia Internet (Egress)</label>
+                                <div class="relative">
+                                    <input id="transfer-gb" type="number" min="0" value="50" oninput="calculate()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all pr-12">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">GB</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 italic">* Tarifa Estándar: $0.09 / GB</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Right: Results Card (Sticky on Large) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Main Result Card -->
+                <div class="bg-gradient-to-br from-blue-600 to-emerald-600 rounded-3xl p-8 shadow-2xl relative overflow-hidden group sticky top-8">
+                    <div class="absolute -right-4 -top-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+                    
+                    <div class="relative z-10 space-y-6">
+                        <div>
+                            <h3 class="text-blue-100 font-medium tracking-wide uppercase text-xs mb-1">Costo Total Mensual (con IVA)</h3>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-5xl md:text-6xl font-black tracking-tighter" id="total-mxn-iva">$0.00</span>
+                                <span class="text-xl font-bold text-blue-100">MXN</span>
+                            </div>
+                        </div>
+
+                        <!-- Exchange Rate Info -->
+                        <div class="pt-4 border-t border-white/20">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-blue-100/70">Tipo de Cambio</span>
+                                <div class="flex items-center gap-2">
+                                    <span id="live-badge" class="hidden text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Live</span>
+                                    <span id="exchange-rate-display" class="font-bold text-white">$18.00</span>
+                                    <i data-lucide="refresh-cw" id="refresh-rate" class="w-3 h-3 text-white/50 cursor-pointer hover:text-white transition-opacity"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mini Summary -->
+                        <div class="space-y-2 pt-2">
+                             <div class="flex justify-between text-xs text-blue-100/60">
+                                <span>Subtotal USD</span>
+                                <span id="summary-usd">$0.00</span>
+                             </div>
+                             <div class="flex justify-between text-xs text-blue-100/60 font-medium">
+                                <span>IVA México (16%)</span>
+                                <span id="summary-iva">+$0.00 MXN</span>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desglose Detail Card -->
+                <div class="glass-card rounded-2xl p-6 hidden lg:block">
+                    <h4 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Servicios Activos</h4>
+                    <div class="space-y-4" id="service-breakdown">
+                        <!-- Dynamic items -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center pt-8 border-t border-slate-800 flex flex-col items-center gap-4">
+            <p class="text-slate-500 text-sm">
+                AWS Mexico Multi-Service Calculator. Diseñado para Devs. <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-300">v2.0.0</span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        /*******************************************************************************
+         * awsPrices - DATA MODEL (Fallback)
+         *******************************************************************************/
+        let awsPrices = {
+            "ec2": {
+                "t4g.small": 0.0168,
+                "t3.small": 0.0208,
+                "t3.micro": 0.0104,
+                "t3.medium": 0.0416,
+                "t4g.nano": 0.0042,
+                "t4g.micro": 0.0084,
+                "t4g.medium": 0.0336,
+                "m5.large": 0.096
+            },
+            "s3": 0.023,
+            "lambda": 0.0000166667,
+            "lambda_request": 0.20, // Lambda requests price (often static)
+            "data_transfer": 0.09
+        };
+
+        let EXCHANGE_RATE = 18.00;
+        const IVA_RATE = 0.16;
+        const DAYS_IN_MONTH = 30.4;
+
+        // UI State
+        let currentTab = 'ec2';
+
+        // Elements
+        const ec2Type = document.getElementById('ec2-type');
+        const ec2Hours = document.getElementById('ec2-hours');
+        const s3Gb = document.getElementById('s3-gb');
+        const lambdaReq = document.getElementById('lambda-req');
+        const lambdaDur = document.getElementById('lambda-dur');
+        const lambdaMem = document.getElementById('lambda-mem');
+        const transferGb = document.getElementById('transfer-gb');
+
+        const totalMxnEl = document.getElementById('total-mxn-iva');
+        const summaryUsdEl = document.getElementById('summary-usd');
+        const summaryIvaEl = document.getElementById('summary-iva');
+        const rateDisplay = document.getElementById('exchange-rate-display');
+        const liveBadge = document.getElementById('live-badge');
+        const refreshBtn = document.getElementById('refresh-rate');
+        const serviceBreakdownEl = document.getElementById('service-breakdown');
+
+        // Logic
+        function showSection(id) {
+            currentTab = id;
+            document.querySelectorAll('.config-section').forEach(el => el.classList.add('section-hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('tab-active'));
+            
+            document.getElementById(`section-${id}`).classList.remove('section-hidden');
+            document.getElementById(`tab-${id}`).classList.add('tab-active');
+        }
+
+        async function loadPrices() {
+            try {
+                const response = await fetch('aws_prices.json');
+                const data = await response.json();
+                
+                // Merge or replace data
+                if (data.ec2) {
+                    awsPrices.ec2 = data.ec2;
+                    awsPrices.s3 = data.s3;
+                    awsPrices.lambda = data.lambda;
+                    awsPrices.data_transfer = data.data_transfer;
+                    console.log("Precios sincronizados desde aws_prices.json");
+                    calculate();
+                }
+            } catch (err) {
+                console.warn("Usando precios de fallback. Error al cargar aws_prices.json:", err);
+            }
+        }
+
+        async function fetchRate() {
+            refreshBtn.classList.add('animate-spin');
+            try {
+                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await response.json();
+                if (data.rates && data.rates.MXN) {
+                    EXCHANGE_RATE = data.rates.MXN;
+                    rateDisplay.textContent = `$${EXCHANGE_RATE.toFixed(2)}`;
+                    liveBadge.classList.remove('hidden');
+                    calculate();
+                }
+            } catch (e) { console.error('API Error', e); }
+            finally { refreshBtn.classList.remove('animate-spin'); }
+        }
+
+        function formatUSD(val) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val); }
+        function formatMXN(val) { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val); }
+
+        function calculate() {
+            // 1. EC2
+            const ec2Cost = (awsPrices.ec2[ec2Type.value] || 0) * parseFloat(ec2Hours.value || 0) * DAYS_IN_MONTH;
+            document.getElementById('cost-ec2').textContent = formatUSD(ec2Cost);
+
+            // 2. S3
+            const s3Cost = (awsPrices.s3 || 0) * parseFloat(s3Gb.value || 0);
+            document.getElementById('cost-s3').textContent = formatUSD(s3Cost);
+
+            // 3. Lambda
+            const mRequests = parseFloat(lambdaReq.value || 0);
+            const durationMs = parseFloat(lambdaDur.value || 0);
+            const memoryGB = parseFloat(lambdaMem.value) / 1024;
+            
+            const lambdaReqCost = mRequests * (awsPrices.lambda_request || 0.20);
+            const lambdaDurCost = (mRequests * 1000000) * (durationMs / 1000) * memoryGB * (awsPrices.lambda || 0);
+            const lambdaTotal = lambdaReqCost + lambdaDurCost;
+            document.getElementById('cost-lambda').textContent = formatUSD(lambdaTotal);
+
+            // 4. Transfer
+            const transferCost = (awsPrices.data_transfer || 0) * parseFloat(transferGb.value || 0);
+            document.getElementById('cost-transfer').textContent = formatUSD(transferCost);
+
+            // Total Calculations
+            const subtotalUsd = ec2Cost + s3Cost + lambdaTotal + transferCost;
+            const subtotalMxn = subtotalUsd * EXCHANGE_RATE;
+            const ivaMxn = subtotalMxn * IVA_RATE;
+            const totalMxn = subtotalMxn + ivaMxn;
+
+            // Update UI
+            totalMxnEl.textContent = formatMXN(totalMxn).replace('MXN', '').trim();
+            summaryUsdEl.textContent = formatUSD(subtotalUsd);
+            summaryIvaEl.textContent = `+${formatMXN(ivaMxn)}`;
+
+            updateBreakdown({
+                'Instancias EC2': ec2Cost,
+                'Almacenamiento S3': s3Cost,
+                'AWS Lambda': lambdaTotal,
+                'Transferencia': transferCost
+            });
+        }
+
+        function updateBreakdown(services) {
+            serviceBreakdownEl.innerHTML = '';
+            for (const [name, cost] of Object.entries(services)) {
+                if (cost > 0) {
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-center py-2 border-b border-slate-800/50 text-xs';
+                    row.innerHTML = `<span class="text-slate-400">${name}</span><span class="font-medium text-slate-300">${formatUSD(cost)}</span>`;
+                    serviceBreakdownEl.appendChild(row);
+                }
+            }
+        }
+
+        // Init
+        refreshBtn.addEventListener('click', fetchRate);
+        lucide.createIcons();
+        showSection('ec2');
+        fetchRate();
+        loadPrices();
+        calculate();
+
+    </script>
+</body>
+</html>
