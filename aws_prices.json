@@ -1,0 +1,16 @@
+{
+    "metadata": {
+        "region": "us-east-1",
+        "currency": "USD"
+    },
+    "ec2": {
+        "t3.micro": 0.0104,
+        "t3.small": 0.0208,
+        "t3.medium": 0.0416,
+        "t4g.small": 0.0168,
+        "m5.large": 0.096
+    },
+    "s3": 0.023,
+    "lambda": 1.66667e-05,
+    "data_transfer": 0.09
+}

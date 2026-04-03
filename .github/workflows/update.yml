@@ -26,6 +26,6 @@ jobs:
         run: |
           git config --global user.name 'PriceBot'
           git config --global user.email 'bot@carlos.dev'
-          git add aws_prices.json
-          git commit -m "Auto-update: Precios de AWS actualizados" || exit 0
+          git add -f aws_prices.json
+          git commit -m "Auto-update: Precios de AWS actualizados" || echo "No changes to commit"
           git push

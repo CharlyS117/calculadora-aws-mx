@@ -217,9 +217,10 @@ venv/
 .vscode/
 .idea/
 
-# Local data
+# Data files
 aws_prices.json
-!aws_prices.json # We WANT to include the first version, then let the bot update it.
+!aws_prices.json
+
 
 # Temp media
 *.png
