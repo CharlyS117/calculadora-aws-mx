@@ -2,7 +2,10 @@ name: Actualizar Precios AWS
 on:
   schedule:
     - cron: '0 0 * * 1' # Se ejecuta cada lunes a medianoche
-  workflow_dispatch: # Permite ejecutarlo manualmente si quieres
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -27,5 +30,9 @@ jobs:
           git config --global user.name 'PriceBot'
           git config --global user.email 'bot@carlos.dev'
           git add -f aws_prices.json
-          git commit -m "Auto-update: Precios de AWS actualizados" || echo "No changes to commit"
-          git push
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Auto-update: Precios de AWS actualizados"
+            git push
+          else
+            echo "No changes to commit"
+          fi
